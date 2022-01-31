@@ -28,7 +28,7 @@ class BottleneckGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=10000,
+            max_steps=100,
             # Set this to True for maximum speed
             see_through_walls=False,
             agents=agents,
@@ -67,7 +67,7 @@ class BottleneckGame(MultiGridEnv):
         """
         for j, a in enumerate(self.agents):
             if a.index == i or a.index == 0:
-                rewards[j] += reward
+                rewards[j] += reward - 0.9 * (self.step_count / self.max_steps)
             if self.zero_sum:
                 if a.index != i or a.index == 0:
                     rewards[j] -= reward
@@ -85,7 +85,7 @@ class BottleneckGame(MultiGridEnv):
 
 class BottleneckGame1A5x5(BottleneckGame):
     def __init__(self):
-        super().__init__(size=4,
+        super().__init__(size=5,
                          agents_index=[0],
                          zero_sum=False)
 
