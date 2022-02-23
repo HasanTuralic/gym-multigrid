@@ -14,8 +14,8 @@ class BottleneckGame(MultiGridEnv):
         height=None,
         agents_index=[],
         zero_sum=False,
-        view_size=7
-
+        view_size=7,
+        see_through_walls=False
     ):
         self.zero_sum = zero_sum
         self.world = World
@@ -30,9 +30,9 @@ class BottleneckGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=100,
+            max_steps=200,
             # Set this to True for maximum speed
-            see_through_walls=False,
+            see_through_walls=see_through_walls,
             agents=agents,
             agent_view_size=view_size,
             actions_set=SmallActions
@@ -49,30 +49,21 @@ class BottleneckGame(MultiGridEnv):
 
         # Add bottleneck wall
         self.grid.horz_wall(self.world, 0, floor(height/2), length=floor(width/2))
-        self.grid.horz_wall(self.world, ceil(height/2), floor(height/2), length=floor(width/2))
+        self.grid.horz_wall(self.world, ceil(width/2), floor(height/2), length=floor(width/2))
 
         for i, a in enumerate(self.agents):
             if i == 0:
                 a.pos = (1, 1)
                 a.dir = 0
                 self.put_obj(a, 1, 1)
+                #self.put_obj(Goal(self.world, a.index), 2, 1)
                 self.put_obj(Goal(self.world, a.index), 1, height - 2)
             elif i == 1:
                 a.pos = (width-2, height - 2)
                 a.dir = 0
                 self.put_obj(a, width-2,  height - 2)
+                #self.put_obj(Goal(self.world, a.index), width-3,  height - 2)
                 self.put_obj(Goal(self.world, a.index), width - 2, 1)
-
-    def _reward(self, i, rewards, reward=1):
-        """
-        Compute the reward to be given upon success
-        """
-        for j, a in enumerate(self.agents):
-            if a.index == i or a.index == 0:
-                rewards[j] += reward - 0.9 * (self.step_count / self.max_steps)
-            if self.zero_sum:
-                if a.index != i or a.index == 0:
-                    rewards[j] -= reward
 
     def _handle_goal(self, i, rewards, fwd_pos, fwd_cell):
         # done only if agent has reached correct goal
@@ -105,3 +96,14 @@ class BottleneckGame2A7x7(BottleneckGame):
         super().__init__(size=7,
                          agents_index=[0, 1],
                          zero_sum=False)
+
+
+class BottleneckGame2A7x5(BottleneckGame):
+    # Easiest possible environment for 2 agents
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1],
+                         zero_sum=False,
+                         width=7,
+                         height=5,
+                         see_through_walls=True)
