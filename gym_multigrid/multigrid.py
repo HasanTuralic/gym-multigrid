@@ -1287,7 +1287,10 @@ class MultiGridEnv(gym.Env):
                 if fwd_cell is not None:
                     if fwd_cell.type == 'goal':
                         done = self._handle_goal(i, rewards, fwd_pos, fwd_cell)
-                        self._reward(i, rewards, 1)
+                        # reward all agents equally if done
+                        if done:
+                            for j in order:
+                                self._reward(j, rewards, 1)
                     elif fwd_cell.type == 'switch':
                         self._handle_switch(i, rewards, fwd_pos, fwd_cell)
                 elif fwd_cell is None or fwd_cell.can_overlap():

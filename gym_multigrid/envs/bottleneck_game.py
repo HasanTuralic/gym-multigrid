@@ -20,9 +20,11 @@ class BottleneckGame(MultiGridEnv):
         self.zero_sum = zero_sum
         self.world = World
 
+        self.dones = []
         agents = []
         for i in agents_index:
             agents.append(Agent(self.world, i, view_size=view_size))
+            self.dones.append(False)
 
         super().__init__(
             grid_size=size,
@@ -54,12 +56,12 @@ class BottleneckGame(MultiGridEnv):
                 a.pos = (1, 1)
                 a.dir = 0
                 self.put_obj(a, 1, 1)
-                self.put_obj(Goal(self.world, a.index), width - 2, height - 2)
+                self.put_obj(Goal(self.world, a.index), 1, height - 2)
             elif i == 1:
-                a.pos = (1, height - 2)
+                a.pos = (width-2, height - 2)
                 a.dir = 0
-                self.put_obj(a, 1, height - 2)
-                self.put_obj(Goal(self.world, a.index), width-2, 1)
+                self.put_obj(a, width-2,  height - 2)
+                self.put_obj(Goal(self.world, a.index), width - 2, 1)
 
     def _reward(self, i, rewards, reward=1):
         """
@@ -73,12 +75,13 @@ class BottleneckGame(MultiGridEnv):
                     rewards[j] -= reward
 
     def _handle_goal(self, i, rewards, fwd_pos, fwd_cell):
-        # print(i == fwd_cell.index)
         # done only if agent has reached correct goal
         if i == fwd_cell.index:
-            return True
+            self.dones[i] = True
+        return all(self.dones)
 
     def step(self, actions):
+        self.dones = [False] * len(self.agents)
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
         return obs, rewards, done, info
 
@@ -93,5 +96,12 @@ class BottleneckGame1A5x5(BottleneckGame):
 class BottleneckGame2A5x5(BottleneckGame):
     def __init__(self):
         super().__init__(size=5,
-                         agents_index=[0],
+                         agents_index=[0, 1],
+                         zero_sum=False)
+
+
+class BottleneckGame2A7x7(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=7,
+                         agents_index=[0, 1],
                          zero_sum=False)
