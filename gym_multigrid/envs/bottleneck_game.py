@@ -1,4 +1,5 @@
 from math import ceil, floor
+import random
 from gym_multigrid.multigrid import *
 
 
@@ -15,10 +16,12 @@ class BottleneckGame(MultiGridEnv):
         agents_index=[],
         zero_sum=False,
         view_size=5,
-        see_through_walls=False
+        see_through_walls=False,
+        fixed_pos=True
     ):
         self.zero_sum = zero_sum
         self.world = World
+        self.fixed_pos = fixed_pos
 
         self.dones = []
         agents = []
@@ -30,7 +33,7 @@ class BottleneckGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=500,
+            max_steps=10,
             # Set this to True for maximum speed
             see_through_walls=see_through_walls,
             agents=agents,
@@ -51,19 +54,32 @@ class BottleneckGame(MultiGridEnv):
         self.grid.horz_wall(self.world, 0, floor(height/2), length=floor(width/2))
         self.grid.horz_wall(self.world, ceil(width/2), floor(height/2), length=floor(width/2))
 
+        top_corners = [[1, 1], [width-2, 1]]
+        bot_corners = [[1, height-2], [width-2, height-2]]
+        corners = [top_corners, bot_corners]
+
+        if self.fixed_pos:
+            rand_corner, rand_a, rand_g = [0, 0, 0]
+        else:
+            rand_corner, rand_a, rand_g = [
+                random.randint(0, 1),
+                random.randint(0, 1),
+                random.randint(0, 1)
+            ]
+
         for i, a in enumerate(self.agents):
-            if i == 0:
-                a.pos = (1, 1)
-                a.dir = 0
-                self.put_obj(a, 1, 1)
-                #self.put_obj(Goal(self.world, a.index), 2, 1)
-                self.put_obj(Goal(self.world, a.index), 1, height - 2)
-            elif i == 1:
-                a.pos = (width-2, height - 2)
-                a.dir = 0
-                self.put_obj(a, width-2,  height - 2)
-                #self.put_obj(Goal(self.world, a.index), width-3,  height - 2)
-                self.put_obj(Goal(self.world, a.index), width - 2, 1)
+
+            a_pos = corners[rand_corner][rand_a]
+            g_pos = corners[1-rand_corner][rand_g]
+
+            a.pos = (a_pos[0], a_pos[1])
+            a.dir = 0
+            self.put_obj(a, *a_pos)
+            self.put_obj(Goal(self.world, a.index), *g_pos)
+
+            rand_corner = 1 - rand_corner
+            rand_a = 1 - rand_a
+            rand_g = 1 - rand_g
 
     def _handle_goal(self, i, rewards, fwd_pos, fwd_cell):
         # done only if agent has reached correct goal
@@ -81,21 +97,16 @@ class BottleneckGame1A5x5(BottleneckGame):
     def __init__(self):
         super().__init__(size=5,
                          agents_index=[0],
-                         zero_sum=False)
+                         zero_sum=False,
+                         fixed_pos=False)
 
 
-class BottleneckGame2A5x5(BottleneckGame):
+class BottleneckGame1A5x5F(BottleneckGame):
     def __init__(self):
         super().__init__(size=5,
-                         agents_index=[0, 1],
-                         zero_sum=False)
-
-
-class BottleneckGame2A7x7(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=7,
-                         agents_index=[0, 1],
-                         zero_sum=False)
+                         agents_index=[0],
+                         zero_sum=False,
+                         fixed_pos=True)
 
 
 class BottleneckGame2A7x5(BottleneckGame):
@@ -106,4 +117,5 @@ class BottleneckGame2A7x5(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
-                         see_through_walls=True)
+                         see_through_walls=True,
+                         fixed_pos=True)
