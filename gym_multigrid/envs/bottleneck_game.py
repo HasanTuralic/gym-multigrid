@@ -14,7 +14,7 @@ class BottleneckGame(MultiGridEnv):
         height=None,
         agents_index=[],
         zero_sum=False,
-        view_size=7,
+        view_size=5,
         see_through_walls=False
     ):
         self.zero_sum = zero_sum
@@ -30,7 +30,7 @@ class BottleneckGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=200,
+            max_steps=500,
             # Set this to True for maximum speed
             see_through_walls=see_through_walls,
             agents=agents,

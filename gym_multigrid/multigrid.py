@@ -192,6 +192,15 @@ class Goal(WorldObj):
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
+    def encode(self, world, current_agent=False):
+        if world.encode_dim == 3:
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
+        else:
+            if current_agent:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 1, 0, 0, 0)
+            else:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+
 
 class Switch(WorldObj):
     def __init__(self, world):
@@ -731,6 +740,7 @@ class Grid:
             for j in range(self.height):
                 if vis_mask[i, j]:
                     v = self.get(i, j)
+                    print(v)
 
                     if v is None:
                         array[i, j, 0] = world.OBJECT_TO_IDX['empty']
@@ -740,7 +750,6 @@ class Grid:
                             array[i, j, 3] = 0
                             array[i, j, 4] = 0
                             array[i, j, 5] = 0
-
                     else:
                         array[i, j, :] = v.encode(world)
 
@@ -755,6 +764,8 @@ class Grid:
 
         array = np.zeros((self.width, self.height, world.encode_dim), dtype='uint8')
 
+        agent_id = self.get(*agent_pos).index
+
         for i in range(self.width):
             for j in range(self.height):
                 if vis_mask[i, j]:
@@ -768,7 +779,9 @@ class Grid:
                             array[i, j, 3] = 0
                             array[i, j, 4] = 0
                             array[i, j, 5] = 0
-
+                    elif isinstance(v, Goal):
+                        array[i, j, :] = v.encode(
+                            world, current_agent=(agent_id == v.index))
                     else:
                         array[i, j, :] = v.encode(
                             world, current_agent=np.array_equal(agent_pos, (i, j)))
@@ -1328,7 +1341,7 @@ class MultiGridEnv(gym.Env):
         if self.partial_obs:
             obs = self.gen_obs()
         else:
-            obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(actions))]
+            obs = [self.grid.encode_for_agents(self.agents[i]) for i in range(len(actions))]
 
         obs = [self.objects.normalize_obs*ob for ob in obs]
 
