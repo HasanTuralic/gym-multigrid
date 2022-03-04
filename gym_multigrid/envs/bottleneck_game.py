@@ -33,7 +33,7 @@ class BottleneckGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=10,
+            max_steps=1024,
             # Set this to True for maximum speed
             see_through_walls=see_through_walls,
             agents=agents,
@@ -109,7 +109,7 @@ class BottleneckGame1A5x5F(BottleneckGame):
                          fixed_pos=True)
 
 
-class BottleneckGame2A7x5(BottleneckGame):
+class BottleneckGame2A7x5F(BottleneckGame):
     # Easiest possible environment for 2 agents
     def __init__(self):
         super().__init__(size=None,
@@ -117,5 +117,16 @@ class BottleneckGame2A7x5(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
-                         see_through_walls=True,
+                         see_through_walls=False,
                          fixed_pos=True)
+
+
+class BottleneckGame2A7x5(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1],
+                         zero_sum=False,
+                         width=7,
+                         height=5,
+                         see_through_walls=False,
+                         fixed_pos=False)
