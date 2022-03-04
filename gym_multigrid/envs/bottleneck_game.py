@@ -17,7 +17,8 @@ class BottleneckGame(MultiGridEnv):
         zero_sum=False,
         view_size=5,
         see_through_walls=False,
-        fixed_pos=True
+        fixed_pos=True,
+        actions_set=SmallActions
     ):
         self.zero_sum = zero_sum
         self.world = World
@@ -38,7 +39,7 @@ class BottleneckGame(MultiGridEnv):
             see_through_walls=see_through_walls,
             agents=agents,
             agent_view_size=view_size,
-            actions_set=SmallActions
+            actions_set=actions_set
         )
 
     def _gen_grid(self, width, height):
@@ -109,6 +110,24 @@ class BottleneckGame1A5x5F(BottleneckGame):
                          fixed_pos=True)
 
 
+class BottleneckGame1A5x5Move(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=5,
+                         agents_index=[0],
+                         zero_sum=False,
+                         fixed_pos=False,
+                         actions_set=MoveActions)
+
+
+class BottleneckGame1A5x5FMove(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=5,
+                         agents_index=[0],
+                         zero_sum=False,
+                         fixed_pos=True,
+                         actions_set=MoveActions)
+
+
 class BottleneckGame2A7x5F(BottleneckGame):
     # Easiest possible environment for 2 agents
     def __init__(self):
@@ -118,7 +137,8 @@ class BottleneckGame2A7x5F(BottleneckGame):
                          width=7,
                          height=5,
                          see_through_walls=False,
-                         fixed_pos=True)
+                         fixed_pos=True,
+                         actions_set=MoveActions)
 
 
 class BottleneckGame2A7x5(BottleneckGame):
@@ -129,4 +149,5 @@ class BottleneckGame2A7x5(BottleneckGame):
                          width=7,
                          height=5,
                          see_through_walls=False,
-                         fixed_pos=False)
+                         fixed_pos=False,
+                         actions_set=MoveActions)

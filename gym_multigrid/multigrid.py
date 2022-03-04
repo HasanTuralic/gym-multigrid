@@ -889,6 +889,17 @@ class MineActions:
     build = 4
 
 
+class MoveActions:
+    """Custom actions that move and rotate agent in one step."""
+    available = ['stil', 'right', 'down', 'left', 'up']
+
+    still = 0
+    right = 1
+    down = 2
+    left = 3
+    up = 4
+
+
 class MultiGridEnv(gym.Env):
     """
     2D grid world game environment
@@ -1285,18 +1296,17 @@ class MultiGridEnv(gym.Env):
             # Get the contents of the cell in front of the agent
             fwd_cell = self.grid.get(*fwd_pos)
 
-            # Rotate left
-            if actions[i] == self.actions.left:
-                self.agents[i].dir -= 1
-                if self.agents[i].dir < 0:
-                    self.agents[i].dir += 4
-
-            # Rotate right
-            elif actions[i] == self.actions.right:
-                self.agents[i].dir = (self.agents[i].dir + 1) % 4
-
-            # Move forward
-            elif actions[i] == self.actions.forward:
+            if self.actions == MoveActions:
+                # TODO: Move left
+                if actions[i] == self.actions.right:
+                    self.agents[i].dir = 0
+                elif actions[i] == self.actions.down:
+                    self.agents[i].dir = 1
+                elif actions[i] == self.actions.left:
+                    self.agents[i].dir = 2
+                elif actions[i] == self.actions.up:
+                    self.agents[i].dir = 3
+                    
                 if fwd_cell is not None:
                     if fwd_cell.type == 'goal':
                         done = self._handle_goal(i, rewards, fwd_pos, fwd_cell)
@@ -1312,28 +1322,57 @@ class MultiGridEnv(gym.Env):
                     self.agents[i].pos = fwd_pos
                 self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
-            elif 'build' in self.actions.available and actions[i] == self.actions.build:
-                self._handle_build(i, rewards, fwd_pos, fwd_cell)
-
-            # Pick up an object
-            elif actions[i] == self.actions.pickup:
-                self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
-
-            # Drop an object
-            elif actions[i] == self.actions.drop:
-                self._handle_drop(i, rewards, fwd_pos, fwd_cell)
-
-            # Toggle/activate an object
-            elif actions[i] == self.actions.toggle:
-                if fwd_cell:
-                    fwd_cell.toggle(self, fwd_pos)
-
-            # Done action (not used by default)
-            elif actions[i] == self.actions.done:
-                pass
-
             else:
-                assert False, "unknown action"
+
+                # Rotate left
+                if actions[i] == self.actions.left:
+                    self.agents[i].dir -= 1
+                    if self.agents[i].dir < 0:
+                        self.agents[i].dir += 4
+
+                # Rotate right
+                elif actions[i] == self.actions.right:
+                    self.agents[i].dir = (self.agents[i].dir + 1) % 4
+
+                # Move forward
+                elif actions[i] == self.actions.forward:
+                    if fwd_cell is not None:
+                        if fwd_cell.type == 'goal':
+                            done = self._handle_goal(i, rewards, fwd_pos, fwd_cell)
+                            # reward all agents equally if done
+                            if done:
+                                for j in order:
+                                    rewards[j] = self._reward(j, rewards, 1)
+                        elif fwd_cell.type == 'switch':
+                            self._handle_switch(i, rewards, fwd_pos, fwd_cell)
+                    elif fwd_cell is None or fwd_cell.can_overlap():
+                        self.grid.set(*fwd_pos, self.agents[i])
+                        self.grid.set(*self.agents[i].pos, None)
+                        self.agents[i].pos = fwd_pos
+                    self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
+
+                elif 'build' in self.actions.available and actions[i] == self.actions.build:
+                    self._handle_build(i, rewards, fwd_pos, fwd_cell)
+
+                # Pick up an object
+                elif actions[i] == self.actions.pickup:
+                    self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
+
+                # Drop an object
+                elif actions[i] == self.actions.drop:
+                    self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+
+                # Toggle/activate an object
+                elif actions[i] == self.actions.toggle:
+                    if fwd_cell:
+                        fwd_cell.toggle(self, fwd_pos)
+
+                # Done action (not used by default)
+                elif actions[i] == self.actions.done:
+                    pass
+
+                else:
+                    assert False, "unknown action"
 
         if self.step_count >= self.max_steps:
             done = True
