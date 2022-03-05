@@ -1290,14 +1290,7 @@ class MultiGridEnv(gym.Env):
             if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started or actions[i] == self.actions.still:
                 continue
 
-            # Get the position in front of the agent
-            fwd_pos = self.agents[i].front_pos
-
-            # Get the contents of the cell in front of the agent
-            fwd_cell = self.grid.get(*fwd_pos)
-
             if self.actions == MoveActions:
-                # TODO: Move left
                 if actions[i] == self.actions.right:
                     self.agents[i].dir = 0
                 elif actions[i] == self.actions.down:
@@ -1306,7 +1299,15 @@ class MultiGridEnv(gym.Env):
                     self.agents[i].dir = 2
                 elif actions[i] == self.actions.up:
                     self.agents[i].dir = 3
-                    
+                else:
+                    assert False, "unknown action"
+
+                # Get the position in front of the agent
+                fwd_pos = self.agents[i].front_pos
+
+                # Get the contents of the cell in front of the agent
+                fwd_cell = self.grid.get(*fwd_pos)
+
                 if fwd_cell is not None:
                     if fwd_cell.type == 'goal':
                         done = self._handle_goal(i, rewards, fwd_pos, fwd_cell)
@@ -1323,6 +1324,12 @@ class MultiGridEnv(gym.Env):
                 self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
             else:
+
+                # Get the position in front of the agent
+                fwd_pos = self.agents[i].front_pos
+
+                # Get the contents of the cell in front of the agent
+                fwd_cell = self.grid.get(*fwd_pos)
 
                 # Rotate left
                 if actions[i] == self.actions.left:
@@ -1395,6 +1402,7 @@ class MultiGridEnv(gym.Env):
 
         grids = []
         vis_masks = []
+        agent_positions = []
 
         for a in self.agents:
 
@@ -1402,32 +1410,57 @@ class MultiGridEnv(gym.Env):
 
             grid = self.grid.slice(self.objects, topX, topY, a.view_size, a.view_size)
 
+            new_grid = grid
             for i in range(a.dir + 1):
-                grid = grid.rotate_left()
+                new_grid = new_grid.rotate_left()
 
             # Process occluders and visibility
             # Note that this incurs some performance cost
             if not self.see_through_walls:
-                vis_mask = grid.process_vis(agent_pos=(a.view_size // 2, a.view_size - 1))
+                vis_mask = new_grid.process_vis(agent_pos=(a.view_size // 2, a.view_size - 1))
             else:
                 vis_mask = np.ones(shape=(grid.width, grid.height), dtype=np.bool)
+
+            if self.actions == MoveActions:
+                if a.dir == 0:
+                    pos = [0, 2]
+                elif a.dir == 1:
+                    pos = [2, 0]
+                elif a.dir == 2:
+                    pos = [4, 2]
+                elif a.dir == 3:
+                    pos = [2, 4]
+                else:
+                    assert False, "agent direction unknown"
+                agent_positions.append(pos)
+                for i in range(a.dir + 1):
+                    vis_mask = np.rot90(vis_mask)
+                # TODO remove this
+                # vis_mask = np.ones(shape=(grid.width, grid.height), dtype=np.bool)
+            else:
+                grid = new_grid
+                agent_positions.append(a.pos)
 
             grids.append(grid)
             vis_masks.append(vis_mask)
 
-        return grids, vis_masks
+        return grids, vis_masks, agent_positions
 
     def gen_obs(self):
         """
         Generate the agent's view (partially observable, low-resolution encoding)
         """
 
-        grids, vis_masks = self.gen_obs_grid()
+        grids, vis_masks, agent_positions = self.gen_obs_grid()
 
         # Encode the partially observable view into a numpy array
-        obs = [
-            grid.encode_for_agents(self.objects, [grid.width // 2, grid.height - 1],
-                                   vis_mask) for grid, vis_mask in zip(grids, vis_masks)]
+
+        if self.actions == MoveActions:
+            obs = [grid.encode_for_agents(self.objects, pos, vis_mask)
+                   for grid, vis_mask, pos in zip(grids, vis_masks, agent_positions)]
+        else:
+            obs = [grid.encode_for_agents(self.objects, [grid.width // 2, grid.height - 1],
+                                          vis_mask) for grid, vis_mask in zip(grids, vis_masks)]
 
         return obs
 
