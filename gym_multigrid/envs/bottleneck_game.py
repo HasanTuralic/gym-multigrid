@@ -19,12 +19,12 @@ class BottleneckGame(MultiGridEnv):
         see_through_walls=False,
         fixed_pos=True,
         actions_set=SmallActions,
-        goal_zone=2
+        goal_zone=1
     ):
         self.zero_sum = zero_sum
         self.world = World
         self.fixed_pos = fixed_pos
-        self.goal_zone = goal_zone
+        self.goal_zone = len(agents_index)
 
         agents = []
         for i in agents_index:
@@ -96,8 +96,9 @@ class BottleneckGame(MultiGridEnv):
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
-        done = all([_reached_goal(a) for a in self.agents])
-        if done:
+        success = all([_reached_goal(a) for a in self.agents])
+        done = done or success
+        if success:
             rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
         return obs, rewards, done, info
 
