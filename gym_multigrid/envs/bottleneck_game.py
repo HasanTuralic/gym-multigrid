@@ -18,17 +18,17 @@ class BottleneckGame(MultiGridEnv):
         view_size=5,
         see_through_walls=False,
         fixed_pos=True,
-        actions_set=SmallActions
+        actions_set=SmallActions,
+        goal_zone=2
     ):
         self.zero_sum = zero_sum
         self.world = World
         self.fixed_pos = fixed_pos
+        self.goal_zone = goal_zone
 
-        self.dones = []
         agents = []
         for i in agents_index:
             agents.append(Agent(self.world, i, view_size=view_size))
-            self.dones.append(False)
 
         super().__init__(
             grid_size=size,
@@ -70,7 +70,7 @@ class BottleneckGame(MultiGridEnv):
                 random.randint(0, 1)
             ]
 
-        for i, a in enumerate(self.agents):
+        for _, a in enumerate(self.agents):
 
             a_pos = corners[rand_corner][rand_a]
             g_pos = corners[1-rand_corner][rand_g]
@@ -78,14 +78,23 @@ class BottleneckGame(MultiGridEnv):
             a.pos = (a_pos[0], a_pos[1])
             a.dir = 0
             self.put_obj(a, *a_pos)
-            self.put_obj(Goal(self.world, a.index), *g_pos)
+
+            i, j = g_pos
+            for k in range(self.goal_zone):
+                if self.grid.get(i+k, j) is None:
+                    self.put_obj(Goal(self.world, a.index), i+k, j)
+                if self.grid.get(i-k, j) is None:
+                    self.put_obj(Goal(self.world, a.index), i-k, j)
+                if self.grid.get(i, j+k) is None:
+                    self.put_obj(Goal(self.world, a.index), i, j+k)
+                if self.grid.get(i, j-k) is None:
+                    self.put_obj(Goal(self.world, a.index), i, j-k)
 
             rand_corner = 1 - rand_corner
             rand_a = 1 - rand_a
             rand_g = 1 - rand_g
 
     def step(self, actions):
-        self.dones = [False] * len(self.agents)
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
         done = all([_reached_goal(a) for a in self.agents])
         if done:
