@@ -401,6 +401,7 @@ class Agent(WorldObj):
         self.index = index
         self.view_size = view_size
         self.carrying = None
+        self.standing_on = None
         self.terminated = False
         self.started = True
         self.paused = False
@@ -427,7 +428,13 @@ class Agent(WorldObj):
             else:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
                         world.COLOR_TO_IDX[self.carrying.color], self.dir, 0)
-
+        elif self.standing_on:
+            if current_agent:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.standing_on.type],
+                        world.COLOR_TO_IDX[self.standing_on.color], self.dir, 1)
+            else:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.standing_on.type],
+                        world.COLOR_TO_IDX[self.standing_on.color], self.dir, 0)
         else:
             if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
@@ -984,6 +991,10 @@ class MultiGridEnv(gym.Env):
 
     def reset(self):
 
+        # Prevent carrying object into next episode
+        for a in self.agents:
+            a.standing_on = None
+
         # Generate a new random grid at the start of each episode
         # To keep the same grid for each episode, call env.seed() with
         # the same seed before calling env.reset()
@@ -1310,16 +1321,25 @@ class MultiGridEnv(gym.Env):
 
                 if fwd_cell is not None:
                     if fwd_cell.type == 'goal':
-                        done = self._handle_goal(i, rewards, fwd_pos, fwd_cell)
-                        # reward all agents equally if done
-                        if done:
-                            for j in order:
-                                rewards[j] = self._reward(j, rewards, 1)
+                        self._handle_goal(i, rewards, fwd_pos, fwd_cell)
                     elif fwd_cell.type == 'switch':
                         self._handle_switch(i, rewards, fwd_pos, fwd_cell)
-                elif fwd_cell is None or fwd_cell.can_overlap():
+
+                    if fwd_cell.can_overlap():
+                        self.grid.set(*fwd_pos, self.agents[i])
+                        if self.agents[i].standing_on:
+                            self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
+                        else:
+                            self.grid.set(*self.agents[i].pos, None)
+                        self.agents[i].pos = fwd_pos
+                        self.agents[i].standing_on = fwd_cell
+                elif fwd_cell is None:
                     self.grid.set(*fwd_pos, self.agents[i])
-                    self.grid.set(*self.agents[i].pos, None)
+                    if self.agents[i].standing_on:
+                        self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
+                        self.agents[i].standing_on = None
+                    else:
+                        self.grid.set(*self.agents[i].pos, None)
                     self.agents[i].pos = fwd_pos
                 self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
@@ -1352,10 +1372,27 @@ class MultiGridEnv(gym.Env):
                                     rewards[j] = self._reward(j, rewards, 1)
                         elif fwd_cell.type == 'switch':
                             self._handle_switch(i, rewards, fwd_pos, fwd_cell)
-                    elif fwd_cell is None or fwd_cell.can_overlap():
+                    if fwd_cell.can_overlap():
+                        self.grid.set(*fwd_pos, self.agents[i])
+                        if self.agents[i].standing_on:
+                            self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
+                        else:
+                            self.grid.set(*self.agents[i].pos, None)
+                        self.agents[i].pos = fwd_pos
+                        self.agents[i].standing_on = fwd_cell
+                    elif fwd_cell is None:
                         self.grid.set(*fwd_pos, self.agents[i])
                         self.grid.set(*self.agents[i].pos, None)
                         self.agents[i].pos = fwd_pos
+
+                        self.grid.set(*fwd_pos, self.agents[i])
+                        if self.agents[i].standing_on:
+                            self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
+                            self.agents[i].standing_on = None
+                        else:
+                            self.grid.set(*self.agents[i].pos, None)
+                        self.agents[i].pos = fwd_pos
+
                     self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
                 elif 'build' in self.actions.available and actions[i] == self.actions.build:

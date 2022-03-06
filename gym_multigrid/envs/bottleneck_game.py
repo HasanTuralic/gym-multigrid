@@ -61,6 +61,8 @@ class BottleneckGame(MultiGridEnv):
 
         if self.fixed_pos:
             rand_corner, rand_a, rand_g = [0, 0, 0]
+            # TODO remove this
+            # self.put_obj(Lava(self.world), 2, 1)
         else:
             rand_corner, rand_a, rand_g = [
                 random.randint(0, 1),
@@ -82,16 +84,21 @@ class BottleneckGame(MultiGridEnv):
             rand_a = 1 - rand_a
             rand_g = 1 - rand_g
 
-    def _handle_goal(self, i, rewards, fwd_pos, fwd_cell):
-        # done only if agent has reached correct goal
-        if i == fwd_cell.index:
-            self.dones[i] = True
-        return all(self.dones)
-
     def step(self, actions):
         self.dones = [False] * len(self.agents)
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
+        done = all([_reached_goal(a) for a in self.agents])
+        if done:
+            rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
         return obs, rewards, done, info
+
+
+def _reached_goal(agent: Agent) -> bool:
+    """Returns true if the agent is standing on the correct goal."""
+    if agent.standing_on:
+        return agent.standing_on.index == agent.index
+    else:
+        return False
 
 
 class BottleneckGame1A5x5(BottleneckGame):
