@@ -34,7 +34,7 @@ class BottleneckGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=1024,
+            max_steps=512,
             # Set this to True for maximum speed
             see_through_walls=see_through_walls,
             agents=agents,
@@ -91,8 +91,9 @@ class BottleneckGame(MultiGridEnv):
                     self.put_obj(Goal(self.world, a.index), i, j-k)
 
             rand_corner = 1 - rand_corner
-            rand_a = 1 - rand_a
-            rand_g = 1 - rand_g
+            temp = rand_a
+            rand_a = 1 - rand_g
+            rand_g = 1 - temp
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)

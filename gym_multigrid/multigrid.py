@@ -199,7 +199,7 @@ class Goal(WorldObj):
             if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 1, 0, 0, 0)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+                return (world.OBJECT_TO_IDX[self.type]-1, world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
 
 
 class Switch(WorldObj):
@@ -433,8 +433,7 @@ class Agent(WorldObj):
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.standing_on.type],
                         world.COLOR_TO_IDX[self.standing_on.color], self.dir, 1)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.standing_on.type],
-                        world.COLOR_TO_IDX[self.standing_on.color], self.dir, 0)
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
         else:
             if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
