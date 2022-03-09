@@ -50,7 +50,7 @@ class CommGame(MultiGridEnv):
         self.grid.horz_wall(self.world, 0, height-1)
         self.grid.vert_wall(self.world, 0, 0)
         self.grid.vert_wall(self.world, width-1, 0)
-        
+
         # Add separation wall
         self.grid.horz_wall(self.world, 0, floor(height/2), length=width)
 
@@ -60,14 +60,14 @@ class CommGame(MultiGridEnv):
 
         a1 = self.agents[0]
         a1.pos = (floor(width/2), 1)
-        a1.dir = 0
+        a1.dir = 1
         self.put_obj(a1, floor(width/2), 1)
         corner = random.choice(top_corners)
         self.put_obj(Goal(self.world, a1.index), *corner)
 
         a2 = self.agents[1]
         a2.pos = (floor(width/2), height-2)
-        a2.dir = 0
+        a2.dir = 1
         self.put_obj(a2, floor(width/2), height-2)
         self.put_obj(Goal(self.world, a2.index), 1, height-2)
         self.put_obj(Goal(self.world, a2.index), width-2, height-2)
@@ -82,6 +82,11 @@ class CommGame(MultiGridEnv):
 
 
 def _check_success(agent_a: Agent, agent_b: Agent):
+    """
+    Returns two booleans. 
+    The first one signalizes if the episode is done. 
+    The second one shows if the episode was finished successfully.
+    """
     if agent_a.standing_on and agent_b.standing_on:
         if agent_a.standing_on.index == agent_a.index and agent_b.standing_on.index == agent_b.index:
             if agent_a.pos[0] == agent_b.pos[0]:
@@ -89,14 +94,6 @@ def _check_success(agent_a: Agent, agent_b: Agent):
             else:
                 return True, False
     return False, False
-
-
-def _reached_goal(agent: Agent) -> bool:
-    """Returns true if the agent is standing on the correct goal."""
-    if agent.standing_on:
-        return agent.standing_on.index == agent.index
-    else:
-        return False
 
 
 class CommGame2A7x5(CommGame):
