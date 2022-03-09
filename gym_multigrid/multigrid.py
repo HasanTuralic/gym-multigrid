@@ -1533,7 +1533,7 @@ class MultiGridEnv(gym.Env):
         if highlight:
 
             # Compute which cells are visible to the agent
-            _, vis_masks = self.gen_obs_grid()
+            _, vis_masks, _ = self.gen_obs_grid()
 
             highlight_masks = {(i, j): [] for i in range(self.width) for j in range(self.height)}
 
