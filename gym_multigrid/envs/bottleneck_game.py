@@ -51,9 +51,18 @@ class BottleneckGame(MultiGridEnv):
         self.grid.vert_wall(self.world, 0, 0)
         self.grid.vert_wall(self.world, width-1, 0)
 
-        # Add bottleneck wall
-        self.grid.horz_wall(self.world, 0, floor(height/2), length=floor(width/2))
-        self.grid.horz_wall(self.world, ceil(width/2), floor(height/2), length=floor(width/2))
+        if self.height <= 6:
+            # Add bottleneck wall
+            self.grid.horz_wall(self.world, 0, floor(height/2), length=floor(width/2))
+            self.grid.horz_wall(self.world, ceil(width/2), floor(height/2), length=floor(width/2))
+        elif self.height > 6:
+            first, second = random.sample(range(2, 4), 2)
+            # First wall
+            self.grid.horz_wall(self.world, 0, 2, length=first)
+            self.grid.horz_wall(self.world, first+1, 2, length=6-first)
+            # Second wall
+            self.grid.horz_wall(self.world, 0, 4, length=second)
+            self.grid.horz_wall(self.world, second+1, 4, length=6-second)
 
         top_corners = [[1, 1], [width-2, 1]]
         bot_corners = [[1, height-2], [width-2, height-2]]
@@ -147,7 +156,6 @@ class BottleneckGame1A5x5FMove(BottleneckGame):
 
 
 class BottleneckGame2A7x5F(BottleneckGame):
-    # Easiest possible environment for 2 agents
     def __init__(self):
         super().__init__(size=None,
                          agents_index=[0, 1],
@@ -166,6 +174,30 @@ class BottleneckGame2A7x5(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
+                         see_through_walls=False,
+                         fixed_pos=False,
+                         actions_set=MoveActions)
+
+
+class BottleneckGame2A7x7F(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1],
+                         zero_sum=False,
+                         width=7,
+                         height=7,
+                         see_through_walls=False,
+                         fixed_pos=True,
+                         actions_set=MoveActions)
+
+
+class BottleneckGame2A7x7(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1],
+                         zero_sum=False,
+                         width=7,
+                         height=7,
                          see_through_walls=False,
                          fixed_pos=False,
                          actions_set=MoveActions)
