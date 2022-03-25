@@ -25,6 +25,7 @@ class CommGame(MultiGridEnv):
         self.world = World
         self.fixed_pos = fixed_pos
         self.goal_zone = goal_zone
+        self.side = None
 
         agents = []
         for i in agents_index:
@@ -56,13 +57,14 @@ class CommGame(MultiGridEnv):
 
         # agent_pos = [[ceil(width/2), 1], [ceil(width/2), height-2]]
         # bot_corners = [[1, height-2], [width-2, height-2]]
+        side = random.randint(0, 1)
         top_corners = [[1, 1], [width-2, 1]]
 
         a1 = self.agents[0]
         a1.pos = (floor(width/2), 1)
         a1.dir = 1
         self.put_obj(a1, floor(width/2), 1)
-        corner = random.choice(top_corners)
+        corner = top_corners[side]
         self.put_obj(Goal(self.world, a1.index), *corner)
 
         a2 = self.agents[1]
@@ -72,12 +74,16 @@ class CommGame(MultiGridEnv):
         self.put_obj(Goal(self.world, a2.index), 1, height-2)
         self.put_obj(Goal(self.world, a2.index), width-2, height-2)
 
+        # Save side to pass as info
+        self.side = side
+
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
         temp_done, success = _check_success(*self.agents)
         done = done or temp_done
         if success:
             rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
+        info["side"] = self.side
         return obs, rewards, done, info
 
 
