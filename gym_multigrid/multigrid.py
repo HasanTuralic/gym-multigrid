@@ -185,6 +185,7 @@ class Goal(WorldObj):
             super().__init__(world, 'goal', world.IDX_TO_COLOR[color])
         self.index = index
         self.reward = reward
+        self.indices = [index]
 
     def can_overlap(self):
         return True
