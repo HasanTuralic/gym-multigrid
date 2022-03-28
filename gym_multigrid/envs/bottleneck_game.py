@@ -51,18 +51,18 @@ class BottleneckGame(MultiGridEnv):
         self.grid.vert_wall(self.world, 0, 0)
         self.grid.vert_wall(self.world, width-1, 0)
 
-        if self.height <= 6:
+        num_bottlenecks = int((self.height-3)/2)
+        if num_bottlenecks == 1:
             # Add bottleneck wall
             self.grid.horz_wall(self.world, 0, floor(height/2), length=floor(width/2))
             self.grid.horz_wall(self.world, ceil(width/2), floor(height/2), length=floor(width/2))
-        elif self.height > 6:
-            first, second = random.sample(range(2, 4), 2)
-            # First wall
-            self.grid.horz_wall(self.world, 0, 2, length=first)
-            self.grid.horz_wall(self.world, first+1, 2, length=6-first)
-            # Second wall
-            self.grid.horz_wall(self.world, 0, 4, length=second)
-            self.grid.horz_wall(self.world, second+1, 4, length=6-second)
+        else:
+            for i in range(num_bottlenecks):
+                rand_w = random.choice(range(2, self.width-3))
+                wall_h = (i+1)*2
+                # First wall
+                self.grid.horz_wall(self.world, 0, wall_h, length=rand_w)
+                self.grid.horz_wall(self.world, rand_w+1, wall_h, length=self.height-1-rand_w)
 
         top_corners = [[1, 1], [width-2, 1]]
         bot_corners = [[1, height-2], [width-2, height-2]]
@@ -227,3 +227,27 @@ class BottleneckGame2A7x7Z(BottleneckGame):
                          fixed_pos=False,
                          actions_set=MoveActions,
                          goal_zone=10)
+
+class BottleneckGame2A15x15FZ(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1],
+                         zero_sum=False,
+                         width=15,
+                         height=15,
+                         see_through_walls=False,
+                         fixed_pos=True,
+                         actions_set=MoveActions,
+                         goal_zone=15)
+
+class BottleneckGame2A15x15Z(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1],
+                         zero_sum=False,
+                         width=15,
+                         height=15,
+                         see_through_walls=False,
+                         fixed_pos=False,
+                         actions_set=MoveActions,
+                         goal_zone=15)
