@@ -44,6 +44,7 @@ class BottleneckGame(MultiGridEnv):
         )
 
     def _gen_grid(self, width, height):
+        self.agents_reached_goal = [False] * len(self.agents)
         self.grid = Grid(width, height)
 
         # Generate the surrounding walls
@@ -126,7 +127,7 @@ class BottleneckGame(MultiGridEnv):
                                 fwd_cell.standing_on = Goal(self.world, a.index)
                             else:
                                 fwd_cell.standing_on.indices.append(id)
-                    if i-k >= 0: 
+                    if i-k >= 0:
                         fwd_cell = self.grid.get(i-k, j)
                         if fwd_cell is None:
                             self.put_obj(Goal(self.world, a.index), i-k, j)
@@ -140,14 +141,29 @@ class BottleneckGame(MultiGridEnv):
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
-        success = all([_reached_goal(a) for a in self.agents])
+        success = all([_on_goal(a) for a in self.agents])
+        rewards = self.get_rewards(success)
         done = done or success
-        if success:
-            rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
         return obs, rewards, done, info
 
+    def get_rewards(self, success: bool):
+        """
+        Compute the reward to be given upon success
+        """
+        rewards = []
+        for i, a in enumerate(self.agents):
+            if success:
+                rewards.append(1)
+            else:
+                rewards.append(0)
+            # if the agent reached goal for the first time
+            if _on_goal(a) and not self.agents_reached_goal[i]:
+                self.agents_reached_goal[i] = True
+                rewards += 1
+        return rewards
 
-def _reached_goal(agent: Agent) -> bool:
+
+def _on_goal(agent: Agent) -> bool:
     """Returns true if the agent is standing on the correct goal."""
     if agent.standing_on:
         return agent.index in agent.standing_on.indices
@@ -205,7 +221,7 @@ class BottleneckGame3A7x5Z(BottleneckGame):
                          see_through_walls=False,
                          fixed_pos=False,
                          goal_zone=10,
-                         actions_set=MoveActions, 
+                         actions_set=MoveActions,
                          max_steps=128)
 
 
