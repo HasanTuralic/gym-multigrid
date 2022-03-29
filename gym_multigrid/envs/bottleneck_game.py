@@ -20,7 +20,7 @@ class BottleneckGame(MultiGridEnv):
         fixed_pos=True,
         actions_set=MoveActions,
         goal_zone=2,
-        max_steps=512,
+        max_steps=128,
     ):
         self.zero_sum = zero_sum
         self.world = World
@@ -159,7 +159,7 @@ class BottleneckGame(MultiGridEnv):
             # if the agent reached goal for the first time
             if _on_goal(a) and not self.agents_reached_goal[i]:
                 self.agents_reached_goal[i] = True
-                rewards += 1
+                rewards[i] += 1
         return rewards
 
 
