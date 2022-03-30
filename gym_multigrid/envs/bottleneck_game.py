@@ -155,7 +155,7 @@ class BottleneckGame(MultiGridEnv):
             if success:
                 rewards.append(1)
             else:
-                rewards.append(0)
+                rewards.append(-(1/self.max_steps))
             # if the agent reached goal for the first time
             if _on_goal(a) and not self.agents_reached_goal[i]:
                 self.agents_reached_goal[i] = True
