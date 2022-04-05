@@ -430,11 +430,16 @@ class Agent(WorldObj):
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
                         world.COLOR_TO_IDX[self.carrying.color], self.dir, 0)
         elif self.standing_on:
-            if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.standing_on.type],
-                        world.COLOR_TO_IDX[self.standing_on.color], self.dir, 1)
+            if isinstance(self.standing_on, Goal):
+                own_goal = 1 if self.index in self.standing_on.indices else 0
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
+                own_goal = 0
+            if current_agent:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], own_goal,
+                        0, self.dir, 1)
+            else:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], own_goal,
+                        0, self.dir, 0)
         else:
             if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
@@ -788,7 +793,7 @@ class Grid:
                             array[i, j, 5] = 0
                     elif isinstance(v, Goal):
                         array[i, j, :] = v.encode(
-                            world, current_agent=(agent_id == v.index))
+                            world, current_agent=(agent_id in v.indices))
                     else:
                         array[i, j, :] = v.encode(
                             world, current_agent=np.array_equal(agent_pos, (i, j)))
