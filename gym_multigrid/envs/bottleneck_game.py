@@ -151,7 +151,8 @@ class BottleneckGame(MultiGridEnv):
         #               ), "Agents should stand on their own goal."
         assert all([sum(sum(o[:, :, 5])) == 1 for o in obs]
                    ), "There should be only one agent with the same id."
-
+        
+        info["success"] = success
         return obs, rewards, done, info
 
     def get_rewards(self, success: bool):
