@@ -20,7 +20,7 @@ class BottleneckGame(MultiGridEnv):
         fixed_pos=True,
         actions_set=MoveActions,
         goal_zone=2,
-        max_steps=128,
+        max_steps=64,
     ):
         self.zero_sum = zero_sum
         self.world = World
@@ -208,7 +208,7 @@ class BottleneckGame2A7x5F(BottleneckGame):
                          actions_set=MoveActions)
 
 
-class BottleneckGame2A7x5(BottleneckGame):
+class BottleneckGame2A7x5Z(BottleneckGame):
     def __init__(self):
         super().__init__(size=None,
                          agents_index=[0, 1],
