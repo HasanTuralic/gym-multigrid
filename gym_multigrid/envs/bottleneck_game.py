@@ -127,7 +127,7 @@ class BottleneckGame(MultiGridEnv):
                                 fwd_cell.standing_on = Goal(self.world, a.index)
                             else:
                                 fwd_cell.standing_on.indices.append(id)
-                    if i-k >= 0:
+                    if i-k >= 0 and k > 0:
                         fwd_cell = self.grid.get(i-k, j)
                         if fwd_cell is None:
                             self.put_obj(Goal(self.world, a.index), i-k, j)
@@ -146,12 +146,12 @@ class BottleneckGame(MultiGridEnv):
         done = done or success
 
         # this means that all agents must be standing on their own goal
-        #if success:
-            #assert all([sum(sum(o[:, :, 2])) == 1 for o in obs]
+        # if success:
+        # assert all([sum(sum(o[:, :, 2])) == 1 for o in obs]
         #               ), "Agents should stand on their own goal."
         assert all([sum(sum(o[:, :, 5])) == 1 for o in obs]
                    ), "There should be only one agent with the same id."
-        
+
         info["success"] = success
         return obs, rewards, done, info
 
@@ -224,6 +224,20 @@ class BottleneckGame3A7x5Z(BottleneckGame):
     def __init__(self):
         super().__init__(size=None,
                          agents_index=[0, 1, 2],
+                         zero_sum=False,
+                         width=7,
+                         height=5,
+                         see_through_walls=False,
+                         fixed_pos=False,
+                         goal_zone=10,
+                         actions_set=MoveActions,
+                         max_steps=128)
+
+
+class BottleneckGame4A7x5Z(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1, 2, 3],
                          zero_sum=False,
                          width=7,
                          height=5,

@@ -186,12 +186,20 @@ class Goal(WorldObj):
         self.index = index
         self.reward = reward
         self.indices = [index]
+        self.color_mapping = world.IDX_TO_COLOR
 
     def can_overlap(self):
         return True
 
     def render(self, img):
-        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+        print(self.indices)
+        if len(self.indices) == 2:
+            fill_coords(
+                img, point_in_rect(0, 1, 0, 1),
+                COLORS[self.color],
+                COLORS[self.color_mapping[self.indices[1]]])
+        else:
+            fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
     def encode(self, world, current_agent=False):
         if world.encode_dim == 3:
