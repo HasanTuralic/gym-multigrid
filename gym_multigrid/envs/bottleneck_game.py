@@ -229,7 +229,7 @@ class BottleneckGame3A7x5Z(BottleneckGame):
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=16)
+                         max_steps=128)
 
 
 class BottleneckGame4A7x5Z(BottleneckGame):
