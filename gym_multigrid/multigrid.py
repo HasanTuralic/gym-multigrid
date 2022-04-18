@@ -1,8 +1,7 @@
 import math
 import gym
-from enum import IntEnum
 import numpy as np
-from gym import error, spaces, utils
+from gym import spaces
 from gym.utils import seeding
 from .rendering import *
 from .window import Window
@@ -192,7 +191,9 @@ class Goal(WorldObj):
         return True
 
     def render(self, img):
-        print(self.indices)
+        assert len(
+            self.indices) < 3 and len(
+            self.indices) > 0, "More than 4 agents is not yet impelmented."
         if len(self.indices) == 2:
             fill_coords(
                 img, point_in_rect(0, 1, 0, 1),
@@ -205,10 +206,11 @@ class Goal(WorldObj):
         if world.encode_dim == 3:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
         else:
+            second_color = self.indices[1] if len(self.indices) > 1 else 0
             if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 1, 0, 0, 0)
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 1, second_color, 0, 0)
             else:
-                return (world.OBJECT_TO_IDX[self.type]-1, world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+                return (world.OBJECT_TO_IDX[self.type]-1, world.COLOR_TO_IDX[self.color], second_color, 0, 0, 0)
 
 
 class Switch(WorldObj):
@@ -414,16 +416,20 @@ class Agent(WorldObj):
         self.terminated = False
         self.started = True
         self.paused = False
+        self.center_view = True
 
     def render(self, img):
         c = COLORS[self.color]
-        tri_fn = point_in_triangle(
-            (0.12, 0.19),
-            (0.87, 0.50),
-            (0.12, 0.81),
-        )
-        # Rotate the agent based on its direction
-        tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * math.pi * self.dir)
+        if self.center_view:
+            tri_fn = point_in_circle(0.5, 0.5, 0.31)
+        else:
+            tri_fn = point_in_triangle(
+                (0.12, 0.19),
+                (0.87, 0.50),
+                (0.12, 0.81),
+            )
+            # Rotate the agent based on its direction
+            tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * math.pi * self.dir)
         fill_coords(img, tri_fn, c)
 
     def encode(self, world, current_agent=False):
@@ -760,7 +766,6 @@ class Grid:
             for j in range(self.height):
                 if vis_mask[i, j]:
                     v = self.get(i, j)
-                    print(v)
 
                     if v is None:
                         array[i, j, 0] = world.OBJECT_TO_IDX['empty']
@@ -944,7 +949,8 @@ class MultiGridEnv(gym.Env):
             partial_obs=True,
             agent_view_size=7,
             actions_set=Actions,
-            objects_set=World
+            objects_set=World,
+            center_view=True
     ):
         self.agents = agents
 
@@ -995,6 +1001,10 @@ class MultiGridEnv(gym.Env):
         self.height = height
         self.max_steps = max_steps
         self.see_through_walls = see_through_walls
+
+        # If true, the view radius will be around the agents instead of only in front
+        self.center_view = center_view
+        assert not (center_view and not self.see_through_walls), "Not yet implemented"
 
         # Initialize the RNG
         self.seed(seed=seed)
@@ -1281,6 +1291,7 @@ class MultiGridEnv(gym.Env):
             agent.dir = self._rand_int(0, 4)
 
         agent.init_dir = agent.dir
+        agent.center_view = self.center_view
 
         return pos
 
@@ -1496,12 +1507,50 @@ class MultiGridEnv(gym.Env):
 
         return grids, vis_masks, agent_positions
 
+    def gen_obs_grid_centered(self):
+        """
+        Generate the sub-grid observed by the agents.
+        This method also outputs a visibility mask telling us which grid
+        cells the agents can actually see.
+        """
+
+        grids = []
+        vis_masks = []
+        agent_positions = []
+
+        for a in self.agents:
+
+            topX = a.pos[0] - a.view_size // 2
+            topY = a.pos[1] - a.view_size // 2
+
+            grid = self.grid.slice(self.objects, topX, topY, a.view_size, a.view_size)
+
+            new_grid = grid
+
+            # Process occluders and visibility
+            # Note that this incurs some performance cost
+            if not self.see_through_walls:
+                vis_mask = new_grid.process_vis(agent_pos=(a.view_size // 2, a.view_size // 2))
+            else:
+                vis_mask = np.ones(shape=(grid.width, grid.height), dtype=bool)
+
+            pos = [a.view_size // 2, a.view_size // 2]
+            agent_positions.append(pos)
+
+            grids.append(grid)
+            vis_masks.append(vis_mask)
+
+        return grids, vis_masks, agent_positions
+
     def gen_obs(self):
         """
         Generate the agent's view (partially observable, low-resolution encoding)
         """
 
-        grids, vis_masks, agent_positions = self.gen_obs_grid()
+        if self.center_view:
+            grids, vis_masks, agent_positions = self.gen_obs_grid_centered()
+        else:
+            grids, vis_masks, agent_positions = self.gen_obs_grid()
 
         # Encode the partially observable view into a numpy array
 
@@ -1547,7 +1596,10 @@ class MultiGridEnv(gym.Env):
         if highlight:
 
             # Compute which cells are visible to the agent
-            _, vis_masks, _ = self.gen_obs_grid()
+            if self.center_view:
+                _, vis_masks, _ = self.gen_obs_grid_centered()
+            else:
+                _, vis_masks, _ = self.gen_obs_grid()
 
             highlight_masks = {(i, j): [] for i in range(self.width) for j in range(self.height)}
 
@@ -1557,10 +1609,12 @@ class MultiGridEnv(gym.Env):
                 # of the agent's view area
                 f_vec = a.dir_vec
                 r_vec = a.right_vec
-                top_left = a.pos + f_vec * (a.view_size - 1) - r_vec * (a.view_size // 2)
+                if self.center_view:
+                    top_left = (a.pos[0] - a.view_size // 2, a.pos[1] - (a.view_size // 2))
+                else:
+                    top_left = a.pos + f_vec * (a.view_size - 1) - r_vec * (a.view_size // 2)
 
                 # Mask of which cells to highlight
-
                 # For each cell in the visibility mask
                 for vis_j in range(0, a.view_size):
                     for vis_i in range(0, a.view_size):
@@ -1569,7 +1623,10 @@ class MultiGridEnv(gym.Env):
                             continue
 
                         # Compute the world coordinates of this cell
-                        abs_i, abs_j = top_left - (f_vec * vis_j) + (r_vec * vis_i)
+                        if self.center_view:
+                            abs_i, abs_j = top_left[0] + vis_i, top_left[1] + vis_j
+                        else:
+                            abs_i, abs_j = top_left - (f_vec * vis_j) + (r_vec * vis_i)
 
                         if abs_i < 0 or abs_i >= self.width:
                             continue

@@ -16,11 +16,12 @@ class BottleneckGame(MultiGridEnv):
         agents_index=[],
         zero_sum=False,
         view_size=5,
-        see_through_walls=False,
+        see_through_walls=True,
         fixed_pos=True,
         actions_set=MoveActions,
         goal_zone=2,
         max_steps=64,
+        center_view=True,
     ):
         self.zero_sum = zero_sum
         self.world = World
@@ -30,6 +31,7 @@ class BottleneckGame(MultiGridEnv):
         agents = []
         for i in agents_index:
             agents.append(Agent(self.world, i, view_size=view_size))
+            agents[i].center_view = center_view
 
         super().__init__(
             grid_size=size,
@@ -40,7 +42,8 @@ class BottleneckGame(MultiGridEnv):
             see_through_walls=see_through_walls,
             agents=agents,
             agent_view_size=view_size,
-            actions_set=actions_set
+            actions_set=actions_set,
+            center_view=center_view
         )
 
     def _gen_grid(self, width, height):
@@ -105,39 +108,37 @@ class BottleneckGame(MultiGridEnv):
             rand_corners = random.sample(corners, len(self.agents))
             for id, a in enumerate(self.agents):
                 a_pos = rand_corners[id]
-                g_pos = [rand_corners[id][0], height-1-rand_corners[id][1]]
+                g_pos = [rand_corners[id][0], (height-1)-rand_corners[id][1]]
+
+                assert a_pos[1] != g_pos[1], "Agent and goal should be on different levels."
 
                 a.pos = (a_pos[0], a_pos[1])
                 a.dir = 0
                 if isinstance(self.grid.get(*a_pos), Goal):
                     g = self.grid.get(*a_pos)
                     a.standing_on = g
+                else:
+                    a.standing_on = None
                 self.put_obj(a, *a_pos)
 
                 i, j = g_pos
                 for k in range(self.goal_zone):
                     if i+k < self.width:
-                        fwd_cell = self.grid.get(i+k, j)
-                        if fwd_cell is None:
-                            self.put_obj(Goal(self.world, a.index), i+k, j)
-                        elif isinstance(fwd_cell, Goal):
-                            fwd_cell.indices.append(a.index)
-                        elif isinstance(fwd_cell, Agent):
-                            if fwd_cell.standing_on is None:
-                                fwd_cell.standing_on = Goal(self.world, a.index)
-                            else:
-                                fwd_cell.standing_on.indices.append(id)
+                        self.place_goal(i+k, j, a.index)
                     if i-k >= 0 and k > 0:
-                        fwd_cell = self.grid.get(i-k, j)
-                        if fwd_cell is None:
-                            self.put_obj(Goal(self.world, a.index), i-k, j)
-                        elif isinstance(fwd_cell, Goal):
-                            fwd_cell.indices.append(a.index)
-                        elif isinstance(fwd_cell, Agent):
-                            if fwd_cell.standing_on is None:
-                                fwd_cell.standing_on = Goal(self.world, a.index)
-                            else:
-                                fwd_cell.standing_on.indices.append(id)
+                        self.place_goal(i-k, j, a.index)
+
+    def place_goal(self, i, j, agent_id):
+        fwd_cell = self.grid.get(i, j)
+        if fwd_cell is None:
+            self.put_obj(Goal(self.world, agent_id), i, j)
+        elif isinstance(fwd_cell, Goal):
+            fwd_cell.indices.append(agent_id)
+        elif isinstance(fwd_cell, Agent):
+            if fwd_cell.standing_on is None:
+                fwd_cell.standing_on = Goal(self.world, agent_id)
+            else:
+                fwd_cell.standing_on.indices.append(agent_id)
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
@@ -203,7 +204,6 @@ class BottleneckGame2A7x5F(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
-                         see_through_walls=False,
                          fixed_pos=True,
                          actions_set=MoveActions)
 
@@ -215,7 +215,6 @@ class BottleneckGame2A7x5Z(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
-                         see_through_walls=False,
                          fixed_pos=False,
                          actions_set=MoveActions)
 
@@ -227,11 +226,10 @@ class BottleneckGame3A7x5Z(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
-                         see_through_walls=False,
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=128)
+                         max_steps=16)
 
 
 class BottleneckGame4A7x5Z(BottleneckGame):
@@ -241,7 +239,6 @@ class BottleneckGame4A7x5Z(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=5,
-                         see_through_walls=False,
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
@@ -255,7 +252,6 @@ class BottleneckGame2A7x7F(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=7,
-                         see_through_walls=False,
                          fixed_pos=True,
                          actions_set=MoveActions)
 
@@ -267,7 +263,6 @@ class BottleneckGame2A7x7(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=7,
-                         see_through_walls=False,
                          fixed_pos=False,
                          actions_set=MoveActions)
 
@@ -279,7 +274,6 @@ class BottleneckGame2A7x7FZ(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=7,
-                         see_through_walls=False,
                          fixed_pos=True,
                          actions_set=MoveActions,
                          goal_zone=10)
@@ -292,7 +286,6 @@ class BottleneckGame2A7x7Z(BottleneckGame):
                          zero_sum=False,
                          width=7,
                          height=7,
-                         see_through_walls=False,
                          fixed_pos=False,
                          actions_set=MoveActions,
                          goal_zone=10)
@@ -305,7 +298,6 @@ class BottleneckGame2A15x15FZ(BottleneckGame):
                          zero_sum=False,
                          width=15,
                          height=15,
-                         see_through_walls=False,
                          fixed_pos=True,
                          actions_set=MoveActions,
                          goal_zone=15)
@@ -318,7 +310,6 @@ class BottleneckGame2A15x15Z(BottleneckGame):
                          zero_sum=False,
                          width=15,
                          height=15,
-                         see_through_walls=False,
                          fixed_pos=False,
                          actions_set=MoveActions,
                          goal_zone=15)
