@@ -84,6 +84,7 @@ class CommGame(MultiGridEnv):
         if success:
             rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
         info["side"] = self.side
+        info["success"] = success
         return obs, rewards, done, info
 
 

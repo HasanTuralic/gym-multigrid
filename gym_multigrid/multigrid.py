@@ -834,6 +834,59 @@ class Grid:
     #
     #     return grid, vis_mask
 
+    def process_vis_new(grid):
+        assert grid.width == 5 and grid.height == 5
+
+        mask = np.zeros(shape=(grid.width, grid.height), dtype=bool)
+        agent_pos = [grid.width//2, grid.height//2]
+
+        w = agent_pos[0]
+        h = agent_pos[1]
+
+        # left
+        w_offset = -1
+        while w+w_offset >= 0:
+            mask[w+w_offset, h] = True
+            cell = grid.get(w+w_offset, h)
+            if cell and not cell.see_behind():
+                break
+            w_offset -= 1
+
+        # right
+        w_offset = 1
+        while w+w_offset < grid.width:
+            mask[w+w_offset, h] = True
+            cell = grid.get(w+w_offset, h)
+            if cell and not cell.see_behind():
+                break
+            w_offset += 1
+
+        # top
+        h_offset = -1
+        while h+h_offset >= 0:
+            mask[w, h+h_offset] = True
+            cell = grid.get(w, h+h_offset)
+            if cell and not cell.see_behind():
+                break
+            h_offset -= 1
+
+        # bottom
+        h_offset = 1
+        while h+h_offset < grid.height:
+            mask[w, h+h_offset] = True
+            cell = grid.get(w, h+h_offset)
+            if cell and not cell.see_behind():
+                break
+            h_offset += 1
+
+        # TODO: this is just a workaround for comm game
+        mask[:, h+1] = True
+        mask[:, h-1] = True
+        mask[:, h+2] = False
+        mask[:, h-2] = False
+
+        return mask
+
     def process_vis(grid, agent_pos):
         mask = np.zeros(shape=(grid.width, grid.height), dtype=bool)
 
@@ -1004,7 +1057,9 @@ class MultiGridEnv(gym.Env):
 
         # If true, the view radius will be around the agents instead of only in front
         self.center_view = center_view
-        assert not (center_view and not self.see_through_walls), "Not yet implemented"
+        #assert not (center_view and not self.see_through_walls), "Not yet implemented"
+        if self.center_view and not self.see_through_walls:
+            assert agent_view_size <= 5, "Not implemented for larger view size"
 
         # Initialize the RNG
         self.seed(seed=seed)
@@ -1530,7 +1585,7 @@ class MultiGridEnv(gym.Env):
             # Process occluders and visibility
             # Note that this incurs some performance cost
             if not self.see_through_walls:
-                vis_mask = new_grid.process_vis(agent_pos=(a.view_size // 2, a.view_size // 2))
+                vis_mask = new_grid.process_vis_new()
             else:
                 vis_mask = np.ones(shape=(grid.width, grid.height), dtype=bool)
 
