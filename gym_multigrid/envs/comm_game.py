@@ -35,7 +35,7 @@ class CommGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=64,
+            max_steps=32,
             # Set this to True for maximum speed
             see_through_walls=see_through_walls,
             agents=agents,
@@ -64,6 +64,7 @@ class CommGame(MultiGridEnv):
         a1.pos = (floor(width/2), 1)
         a1.dir = 1
         self.put_obj(a1, floor(width/2), 1)
+        # First agent has one goal
         corner = top_corners[side]
         self.put_obj(Goal(self.world, a1.index), *corner)
 
@@ -71,6 +72,7 @@ class CommGame(MultiGridEnv):
         a2.pos = (floor(width/2), height-2)
         a2.dir = 1
         self.put_obj(a2, floor(width/2), height-2)
+        # Second agent has two goals
         self.put_obj(Goal(self.world, a2.index), 1, height-2)
         self.put_obj(Goal(self.world, a2.index), width-2, height-2)
 
@@ -79,7 +81,7 @@ class CommGame(MultiGridEnv):
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
-        temp_done, success = _check_success(*self.agents)
+        temp_done, success = self.check_success(*self.agents)
         done = done or temp_done
         if success:
             rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
@@ -87,20 +89,21 @@ class CommGame(MultiGridEnv):
         info["success"] = success
         return obs, rewards, done, info
 
-
-def _check_success(agent_a: Agent, agent_b: Agent):
-    """
-    Returns two booleans. 
-    The first one signalizes if the episode is done. 
-    The second one shows if the episode was finished successfully.
-    """
-    if agent_a.standing_on and agent_b.standing_on:
-        if agent_a.standing_on.index == agent_a.index and agent_b.standing_on.index == agent_b.index:
-            if agent_a.pos[0] == agent_b.pos[0]:
-                return True, True
+    def check_success(self, agent_a: Agent, agent_b: Agent):
+        """
+        Returns two booleans. 
+        The first one signalizes if the episode is done. 
+        The second one shows if the episode was finished successfully.
+        """
+        correct_goal = 1 if self.side == 0 else self.grid.width-2
+        if agent_b.standing_on:
+            if agent_b.pos[0] == correct_goal:
+                # Both agents are on the correct goal
+                if agent_a.standing_on and agent_a.pos[0] == agent_b.pos[0]:
+                    return True, True
             else:
                 return True, False
-    return False, False
+        return False, False
 
 
 class CommGame2A7x5(CommGame):
