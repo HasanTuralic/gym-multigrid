@@ -154,7 +154,8 @@ class BottleneckGame(MultiGridEnv):
                    ), "There should be only one agent with the same id."
 
         info["success"] = success
-        return obs, rewards, done, info
+        dones = [done] * len(self.agents)
+        return obs, rewards, dones, info
 
     def get_rewards(self, success: bool):
         """

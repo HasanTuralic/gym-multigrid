@@ -87,7 +87,8 @@ class CommGame(MultiGridEnv):
             rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
         info["side"] = self.side
         info["success"] = success
-        return obs, rewards, done, info
+        dones = [done] * len(self.agents)
+        return obs, rewards, dones, info
 
     def check_success(self, agent_a: Agent, agent_b: Agent):
         """
