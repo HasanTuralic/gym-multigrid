@@ -35,7 +35,7 @@ class CommGame(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps=64,
+            max_steps=16,
             # Set this to True for maximum speed
             see_through_walls=see_through_walls,
             agents=agents,
