@@ -161,6 +161,7 @@ class BottleneckGame(MultiGridEnv):
         """
         Compute the reward to be given upon success
         """
+        """
         rewards = []
         for i, a in enumerate(self.agents):
             if success:
@@ -171,6 +172,16 @@ class BottleneckGame(MultiGridEnv):
             if _on_goal(a) and not self.agents_reached_goal[i]:
                 self.agents_reached_goal[i] = True
                 rewards[i] += 1
+        """
+        rewards = [-(1/self.max_steps)] * len(self.agents)
+        for i, a in enumerate(self.agents):
+            # if the agent reached goal for the first time
+            if _on_goal(a) and not self.agents_reached_goal[i]:
+                self.agents_reached_goal[i] = True
+                # All agents get rewards
+                rewards = [r+1 for r in rewards]
+        if success:
+            rewards = [r+1 for r in rewards]
         return rewards
 
 
@@ -182,33 +193,6 @@ def _on_goal(agent: Agent) -> bool:
         return False
 
 
-class BottleneckGame1A5x5(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=5,
-                         agents_index=[0],
-                         zero_sum=False,
-                         fixed_pos=False)
-
-
-class BottleneckGame1A5x5F(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=5,
-                         agents_index=[0],
-                         zero_sum=False,
-                         fixed_pos=True)
-
-
-class BottleneckGame2A7x5F(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=None,
-                         agents_index=[0, 1],
-                         zero_sum=False,
-                         width=7,
-                         height=5,
-                         fixed_pos=True,
-                         actions_set=MoveActions)
-
-
 class BottleneckGame2A7x5Z(BottleneckGame):
     def __init__(self):
         super().__init__(size=None,
@@ -217,7 +201,8 @@ class BottleneckGame2A7x5Z(BottleneckGame):
                          width=7,
                          height=5,
                          fixed_pos=False,
-                         actions_set=MoveActions)
+                         actions_set=MoveActions,
+                         max_steps=32)
 
 
 class BottleneckGame3A7x5Z(BottleneckGame):
@@ -230,7 +215,7 @@ class BottleneckGame3A7x5Z(BottleneckGame):
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=128)
+                         max_steps=32)
 
 
 class BottleneckGame4A7x5Z(BottleneckGame):
@@ -243,7 +228,7 @@ class BottleneckGame4A7x5Z(BottleneckGame):
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=128)
+                         max_steps=32)
 
 
 class BottleneckGame2A7x7F(BottleneckGame):
