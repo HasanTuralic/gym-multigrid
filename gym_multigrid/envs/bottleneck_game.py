@@ -231,40 +231,6 @@ class BottleneckGame4A7x5Z(BottleneckGame):
                          max_steps=32)
 
 
-class BottleneckGame2A7x7F(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=None,
-                         agents_index=[0, 1],
-                         zero_sum=False,
-                         width=7,
-                         height=7,
-                         fixed_pos=True,
-                         actions_set=MoveActions)
-
-
-class BottleneckGame2A7x7(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=None,
-                         agents_index=[0, 1],
-                         zero_sum=False,
-                         width=7,
-                         height=7,
-                         fixed_pos=False,
-                         actions_set=MoveActions)
-
-
-class BottleneckGame2A7x7FZ(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=None,
-                         agents_index=[0, 1],
-                         zero_sum=False,
-                         width=7,
-                         height=7,
-                         fixed_pos=True,
-                         actions_set=MoveActions,
-                         goal_zone=10)
-
-
 class BottleneckGame2A7x7Z(BottleneckGame):
     def __init__(self):
         super().__init__(size=None,
@@ -273,29 +239,19 @@ class BottleneckGame2A7x7Z(BottleneckGame):
                          width=7,
                          height=7,
                          fixed_pos=False,
+                         goal_zone=10,
                          actions_set=MoveActions,
-                         goal_zone=10)
+                         max_steps=32)
 
-
-class BottleneckGame2A15x15FZ(BottleneckGame):
+class BottleneckGame4A7x7Z(BottleneckGame):
     def __init__(self):
         super().__init__(size=None,
-                         agents_index=[0, 1],
+                         agents_index=[0, 1, 2, 3],
                          zero_sum=False,
-                         width=15,
-                         height=15,
-                         fixed_pos=True,
-                         actions_set=MoveActions,
-                         goal_zone=15)
-
-
-class BottleneckGame2A15x15Z(BottleneckGame):
-    def __init__(self):
-        super().__init__(size=None,
-                         agents_index=[0, 1],
-                         zero_sum=False,
-                         width=15,
-                         height=15,
+                         width=7,
+                         height=7,
                          fixed_pos=False,
+                         goal_zone=10,
                          actions_set=MoveActions,
-                         goal_zone=15)
+                         max_steps=32)
+
