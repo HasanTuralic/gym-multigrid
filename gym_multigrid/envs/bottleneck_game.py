@@ -179,7 +179,8 @@ class BottleneckGame(MultiGridEnv):
             if _on_goal(a) and not self.agents_reached_goal[i]:
                 self.agents_reached_goal[i] = True
                 # All agents get rewards
-                rewards = [r+(1/len(self.agents)) for r in rewards]
+                #rewards = [r+(1/len(self.agents)) for r in rewards]
+                rewards = [r+1 for r in rewards]
         if success:
             rewards = [r+1 for r in rewards]
         return rewards
