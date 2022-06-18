@@ -290,7 +290,8 @@ class Door(WorldObj):
 
     def can_overlap(self):
         """The agent can only walk over this cell when the door is open"""
-        return self.is_open
+        #return self.is_open
+        return False 
 
     def see_behind(self):
         return self.is_open
@@ -978,6 +979,18 @@ class MoveActions:
     up = 4
 
 
+class OpenActions:
+    """Custom actions that move and rotate agent in one step."""
+    available = ['stil', 'right', 'down', 'left', 'up', "open"]
+
+    still = 0
+    right = 1
+    down = 2
+    left = 3
+    up = 4
+    toggle = 5
+
+
 class MultiGridEnv(gym.Env):
     """
     2D grid world game environment
@@ -1380,50 +1393,61 @@ class MultiGridEnv(gym.Env):
             if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started or actions[i] == self.actions.still:
                 continue
 
-            if self.actions == MoveActions:
-                if actions[i] == self.actions.right:
-                    self.agents[i].dir = 0
-                elif actions[i] == self.actions.down:
-                    self.agents[i].dir = 1
-                elif actions[i] == self.actions.left:
-                    self.agents[i].dir = 2
-                elif actions[i] == self.actions.up:
-                    self.agents[i].dir = 3
+            if self.actions in [MoveActions, OpenActions]:
+                if actions[i] == self.actions.toggle:
+                    x, y = self.agents[i].pos
+                    if self.grid.get(x+1, y):
+                        self.grid.get(x+1, y).toggle(self, None)
+                    if self.grid.get(x-1, y):
+                        self.grid.get(x-1, y).toggle(self, None)
+                    if self.grid.get(x, y+1):
+                        self.grid.get(x, y+1).toggle(self, None)
+                    if self.grid.get(x, y-1):
+                        self.grid.get(x, y-1).toggle(self, None)
                 else:
-                    assert False, "unknown action"
+                    if actions[i] == self.actions.right:
+                        self.agents[i].dir = 0
+                    elif actions[i] == self.actions.down:
+                        self.agents[i].dir = 1
+                    elif actions[i] == self.actions.left:
+                        self.agents[i].dir = 2
+                    elif actions[i] == self.actions.up:
+                        self.agents[i].dir = 3
+                    else:
+                        assert False, "unknown action"
 
-                # Get the position in front of the agent
-                fwd_pos = self.agents[i].front_pos
+                    # Get the position in front of the agent
+                    fwd_pos = self.agents[i].front_pos
 
-                # Get the contents of the cell in front of the agent
-                fwd_cell = self.grid.get(*fwd_pos)
+                    # Get the contents of the cell in front of the agent
+                    fwd_cell = self.grid.get(*fwd_pos)
 
-                if fwd_cell is not None:
-                    if fwd_cell.type == 'goal':
-                        self._handle_goal(i, rewards, fwd_pos, fwd_cell)
-                    elif fwd_cell.type == 'switch':
-                        self._handle_switch(i, rewards, fwd_pos, fwd_cell)
+                    if fwd_cell is not None:
+                        if fwd_cell.type == 'goal':
+                            self._handle_goal(i, rewards, fwd_pos, fwd_cell)
+                        elif fwd_cell.type == 'switch':
+                            self._handle_switch(i, rewards, fwd_pos, fwd_cell)
 
-                    if fwd_cell.can_overlap():
+                        if fwd_cell.can_overlap():
+                            self.grid.set(*fwd_pos, self.agents[i])
+                            if self.agents[i].standing_on:
+                                self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
+                            else:
+                                self.grid.set(*self.agents[i].pos, None)
+                            self.agents[i].pos = fwd_pos
+                            self.agents[i].standing_on = fwd_cell
+                    elif fwd_cell is None:
                         self.grid.set(*fwd_pos, self.agents[i])
                         if self.agents[i].standing_on:
                             self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
+                            self.agents[i].standing_on = None
                         else:
                             self.grid.set(*self.agents[i].pos, None)
                         self.agents[i].pos = fwd_pos
-                        self.agents[i].standing_on = fwd_cell
-                elif fwd_cell is None:
-                    self.grid.set(*fwd_pos, self.agents[i])
-                    if self.agents[i].standing_on:
-                        self.grid.set(*self.agents[i].pos, self.agents[i].standing_on)
-                        self.agents[i].standing_on = None
-                    else:
-                        self.grid.set(*self.agents[i].pos, None)
-                    self.agents[i].pos = fwd_pos
-                self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
+                    self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
             else:
-
+                
                 # Get the position in front of the agent
                 fwd_pos = self.agents[i].front_pos
 
@@ -1487,8 +1511,7 @@ class MultiGridEnv(gym.Env):
 
                 # Toggle/activate an object
                 elif actions[i] == self.actions.toggle:
-                    if fwd_cell:
-                        fwd_cell.toggle(self, fwd_pos)
+                    fwd_cell = self.grid.get(self.agents[i].pos)
 
                 # Done action (not used by default)
                 elif actions[i] == self.actions.done:
@@ -1537,7 +1560,7 @@ class MultiGridEnv(gym.Env):
             else:
                 vis_mask = np.ones(shape=(grid.width, grid.height), dtype=bool)
 
-            if self.actions == MoveActions:
+            if self.actions in [MoveActions, OpenActions]:
                 if a.dir == 0:
                     pos = [0, 2]
                 elif a.dir == 1:
@@ -1609,7 +1632,7 @@ class MultiGridEnv(gym.Env):
 
         # Encode the partially observable view into a numpy array
 
-        if self.actions == MoveActions:
+        if self.actions in [MoveActions, OpenActions]:
             obs = [grid.encode_for_agents(self.objects, pos, vis_mask)
                    for grid, vis_mask, pos in zip(grids, vis_masks, agent_positions)]
         else:

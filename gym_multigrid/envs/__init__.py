@@ -2,3 +2,4 @@ from gym_multigrid.envs.collect_game import CollectGame4HEnv10x10N2
 from gym_multigrid.envs.soccer_game import SoccerGame4HEnv10x15N2
 from gym_multigrid.envs.bottleneck_game import BottleneckGame2A7x5Z, BottleneckGame3A7x5Z, BottleneckGame4A7x5Z, BottleneckGame2A7x7Z, BottleneckGame4A7x7Z
 from gym_multigrid.envs.comm_game import CommGame2A7x5
+from gym_multigrid.envs.red_blue_door import RedBlueDoor6x6, RedBlueDoor8x8, RedBlueDoor10x10, RedBlueDoor12x12
