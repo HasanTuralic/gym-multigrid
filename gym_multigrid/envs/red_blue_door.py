@@ -58,10 +58,13 @@ class RedBlueDoor(MultiGridEnv):
         a2.dir = 1
         self.put_obj(a2, x[1], y[1])
 
-        self.red_door = [0, random.randint(1, height-2)]
+        sides = [0, width-1]
+        side = random.randint(0, 1)
+
+        self.red_door = [sides[side], random.randint(1, height-2)]
         self.put_obj(Door(self.world, "red"), *self.red_door)
 
-        self.blue_door = [width-1, random.randint(1, height-2)]
+        self.blue_door = [sides[1-side], random.randint(1, height-2)]
         self.put_obj(Door(self.world, "blue"), *self.blue_door)
 
     def step(self, actions):
