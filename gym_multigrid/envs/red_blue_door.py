@@ -72,17 +72,16 @@ class RedBlueDoor(MultiGridEnv):
         red_open = self.grid.get(*self.red_door).is_open
 
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
+        success = False
 
         if red_open:
             if self.grid.get(*self.blue_door).is_open and self.grid.get(*self.red_door).is_open:
                 success = True
                 rewards = [self._reward(i, rewards, 1) for i in range(len(self.agents))]
                 done = True
-            success = False
         else:
             if self.grid.get(*self.blue_door).is_open:
                 done = True
-            success = False
 
         info["success"] = success
         dones = [done] * len(self.agents)
