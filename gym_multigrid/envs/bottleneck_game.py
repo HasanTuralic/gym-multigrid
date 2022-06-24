@@ -93,13 +93,15 @@ class BottleneckGame(MultiGridEnv):
                 a.pos = (a_pos[0], a_pos[1])
                 a.dir = 0
                 self.put_obj(a, *a_pos)
-
-                i, j = g_pos
-                for k in range(self.goal_zone):
-                    if i+k < self.width and self.grid.get(i+k, j) is None:
-                        self.put_obj(Goal(self.world, a.index), i+k, j)
-                    if i-k >= 0 and self.grid.get(i-k, j) is None:
-                        self.put_obj(Goal(self.world, a.index), i-k, j)
+                
+                for j_k in [-1, 0, 1]:
+                    i, j = g_pos
+                    j += j_k
+                    for k in range(self.goal_zone):
+                        if i+k < self.width and self.grid.get(i+k, j) is None:
+                            self.put_obj(Goal(self.world, a.index), i+k, j)
+                        if i-k >= 0 and self.grid.get(i-k, j) is None:
+                            self.put_obj(Goal(self.world, a.index), i-k, j)
 
                 rand_corner = 1 - rand_corner
                 temp = rand_a
