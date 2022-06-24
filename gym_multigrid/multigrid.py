@@ -1394,7 +1394,8 @@ class MultiGridEnv(gym.Env):
                 continue
 
             if self.actions in [MoveActions, OpenActions]:
-                if actions[i] == self.actions.toggle:
+
+                if self.actions == OpenActions and actions[i] == self.actions.toggle:
                     x, y = self.agents[i].pos
                     if self.grid.get(x+1, y):
                         self.grid.get(x+1, y).toggle(self, None)

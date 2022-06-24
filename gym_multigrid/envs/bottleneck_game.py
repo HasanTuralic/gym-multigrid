@@ -56,7 +56,9 @@ class BottleneckGame(MultiGridEnv):
         self.grid.vert_wall(self.world, 0, 0)
         self.grid.vert_wall(self.world, width-1, 0)
 
-        num_bottlenecks = int((self.height-3)/2)
+        #num_bottlenecks = int((self.height-3)/2)
+        num_bottlenecks = 1
+
         if num_bottlenecks == 1:
             # Add bottleneck wall
             self.grid.horz_wall(self.world, 0, floor(height/2), length=floor(width/2))
@@ -121,12 +123,14 @@ class BottleneckGame(MultiGridEnv):
                     a.standing_on = None
                 self.put_obj(a, *a_pos)
 
-                i, j = g_pos
-                for k in range(self.goal_zone):
-                    if i+k < self.width:
-                        self.place_goal(i+k, j, a.index)
-                    if i-k >= 0 and k > 0:
-                        self.place_goal(i-k, j, a.index)
+                for j_k in [-1, 0, 1]:
+                    i, j = g_pos
+                    j += j_k
+                    for k in range(self.goal_zone):
+                        if i+k < self.width:
+                            self.place_goal(i+k, j, a.index)
+                        if i-k >= 0 and k > 0:
+                            self.place_goal(i-k, j, a.index)
 
     def place_goal(self, i, j, agent_id):
         fwd_cell = self.grid.get(i, j)
@@ -229,7 +233,7 @@ class BottleneckGame4A7x5Z(BottleneckGame):
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=32)
+                         max_steps=64)
 
 
 class BottleneckGame2A7x7Z(BottleneckGame):
@@ -242,7 +246,7 @@ class BottleneckGame2A7x7Z(BottleneckGame):
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=32)
+                         max_steps=64)
 
 class BottleneckGame4A7x7Z(BottleneckGame):
     def __init__(self):
@@ -254,5 +258,5 @@ class BottleneckGame4A7x7Z(BottleneckGame):
                          fixed_pos=False,
                          goal_zone=10,
                          actions_set=MoveActions,
-                         max_steps=32)
+                         max_steps=64)
 
