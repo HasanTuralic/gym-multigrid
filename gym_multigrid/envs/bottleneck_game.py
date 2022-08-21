@@ -56,8 +56,8 @@ class BottleneckGame(MultiGridEnv):
         self.grid.vert_wall(self.world, 0, 0)
         self.grid.vert_wall(self.world, width-1, 0)
 
-        #num_bottlenecks = int((self.height-3)/2)
-        num_bottlenecks = 1
+        num_bottlenecks = int((self.height-3)/2)
+        #num_bottlenecks = 1
 
         if num_bottlenecks == 1:
             # Add bottleneck wall
@@ -125,7 +125,11 @@ class BottleneckGame(MultiGridEnv):
                     a.standing_on = None
                 self.put_obj(a, *a_pos)
 
-                for j_k in [-1, 0, 1]:
+                if self.height > 5 and num_bottlenecks == 1:
+                    goal_zone_width = [-1, 0, 1]
+                else:
+                    goal_zone_width = [0]
+                for j_k in goal_zone_width:
                     i, j = g_pos
                     j += j_k
                     for k in range(self.goal_zone):
@@ -156,8 +160,8 @@ class BottleneckGame(MultiGridEnv):
         # if success:
         # assert all([sum(sum(o[:, :, 2])) == 1 for o in obs]
         #               ), "Agents should stand on their own goal."
-        assert all([sum(sum(o[:, :, 5])) == 1 for o in obs]
-                   ), "There should be only one agent with the same id."
+        #assert all([sum(sum(o[:, :, 5])) == 1 for o in obs]
+        #           ), "There should be only one agent with the same id."
 
         info["success"] = success
         dones = [done] * len(self.agents)
@@ -186,9 +190,12 @@ class BottleneckGame(MultiGridEnv):
                 self.agents_reached_goal[i] = True
                 # All agents get rewards
                 #rewards = [r+(1/len(self.agents)) for r in rewards]
-                rewards = [r+1 for r in rewards]
-        if success:
-            rewards = [r+1 for r in rewards]
+                # All agents get rewards
+                # rewards = [r+1 for r in rewards]
+                # Only one agent gets reward
+                rewards[i] += 1
+        #if success:
+        #    rewards = [r+1 for r in rewards]
         return rewards
 
 
@@ -242,6 +249,18 @@ class BottleneckGame2A7x7Z(BottleneckGame):
     def __init__(self):
         super().__init__(size=None,
                          agents_index=[0, 1],
+                         zero_sum=False,
+                         width=7,
+                         height=7,
+                         fixed_pos=False,
+                         goal_zone=10,
+                         actions_set=MoveActions,
+                         max_steps=64)
+
+class BottleneckGame3A7x7Z(BottleneckGame):
+    def __init__(self):
+        super().__init__(size=None,
+                         agents_index=[0, 1, 2],
                          zero_sum=False,
                          width=7,
                          height=7,

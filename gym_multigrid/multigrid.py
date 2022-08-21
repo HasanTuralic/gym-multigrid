@@ -10,6 +10,9 @@ import numpy as np
 # Size in pixels of a tile in the full-scale human view
 TILE_PIXELS = 32
 
+# If true, the agent id will be in the observation. If false, there is a 0 or 1 corresponding to "is_current_agent"
+ENCODE_ID = True
+
 # Map of color names to RGB values
 COLORS = {
     'red': np.array([255, 0, 0]),
@@ -435,31 +438,23 @@ class Agent(WorldObj):
 
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
+        
+        last_layer = self.index if ENCODE_ID else 1 if current_agent else 0
+
         if world.encode_dim == 3:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], self.dir)
         elif self.carrying:
-            if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
-                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 1)
-            else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
-                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 0)
+                        world.COLOR_TO_IDX[self.carrying.color], self.dir, last_layer)
         elif self.standing_on:
             if isinstance(self.standing_on, Goal):
                 own_goal = 1 if self.index in self.standing_on.indices else 0
             else:
                 own_goal = 0
-            if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], own_goal,
-                        0, self.dir, 1)
-            else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], own_goal,
-                        0, self.dir, 0)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], own_goal,
+                    0, self.dir, last_layer)
         else:
-            if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
-            else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, last_layer)
 
     @property
     def dir_vec(self):
